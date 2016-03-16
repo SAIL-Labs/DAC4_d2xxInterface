@@ -38,12 +38,17 @@ static void CloseComms(void)
 void mexFunction( int nlhs, mxArray *plhs[],
         int nrhs, const mxArray *prhs[] )
 {
-    double *amplitudes;
+    double *amplitude1;
+    double *amplitude2;
+    double *amplitude3;
+    double *amplitude4;
+    double amplitudes[4];
+    int count;
     //(void) plhs;
     
     /* check for proper number of arguments */
-    if(nrhs!=1) {
-        mexErrMsgIdAndTxt("chrislib:DAC4interface:nrhs","Two inputs required.");
+    if(nrhs!=4) {
+        mexErrMsgIdAndTxt("chrislib:DAC4interface:nrhs","Four inputs required.");
     }
     if(nlhs!=0) {
         mexErrMsgIdAndTxt("chrislib:DAC4interfac:nlhs","No output required.");
@@ -55,13 +60,18 @@ void mexFunction( int nlhs, mxArray *plhs[],
     }
     
     /* check that number of rows in second input argument is 1 and cols is 3 */
-    if(mxGetM(prhs[0])!=1 && mxGetN(prhs[0])!=3) {
-        mexErrMsgIdAndTxt("chrislib:DAC4interfac:not1x3RowVector","Input must be a 1x3 row vector.");
-    }
+//     if((mxGetM(prhs[0])!=1) || (mxGetN(prhs[0])!=4)) {
+//         mexErrMsgIdAndTxt("chrislib:DAC4interfac:not1x4RowVector","Input must be a 1x4 row vector.");
+//     }
     
-    /* Assign pointer to input */
-    amplitudes =  mxGetPr(prhs[0]);
+    /* Assign pointer to inputs */
+    amplitude1 =  mxGetPr(prhs[0]);
+    amplitude2 =  mxGetPr(prhs[1]);
+    amplitude3 =  mxGetPr(prhs[2]);
+    amplitude4 =  mxGetPr(prhs[3]);
     
+    //mexPrintf("N: %d M: %d\n",mxGetN(prhs[0]),mxGetM(prhs[0]));
+    //mexPrintf("value %f %f %f\n",amplitudes[0],amplitudes[1],amplitudes[2]);
     /* check is d2xx serial connection has been establised, otherwise start it */
     if (ftHandle==NULL){
         ftHandle = ft245rInit();
@@ -70,13 +80,32 @@ void mexFunction( int nlhs, mxArray *plhs[],
                     "Could not init d2xx interface.");
         }
         mexAtExit(CloseComms);
-        //mexPrintf("value %f %f %f\n",amplitudes[0],amplitudes[1],amplitudes[2]);
     }
     
     if (NULL != ftHandle)
     {
-        /* Call actual writing to usb subroutine. */
-        setCS(amplitudes, 3);
+        
+        if( mxGetN(prhs[0])==1 ){
+            amplitudes[0]=amplitude1[0];
+            amplitudes[1]=amplitude2[0];
+            amplitudes[2]=amplitude3[0];
+            amplitudes[3]=amplitude4[0];
+            
+            /* Call actual writing to usb subroutine. */
+            setCS(&amplitudes, 3);
+            
+        } else {
+            for(count=0;count<=mxGetN(prhs[0])-1;++count)  //for loop terminates if count>n
+            {
+                amplitudes[0]=amplitude1[count];
+                amplitudes[1]=amplitude2[count];
+                amplitudes[2]=amplitude3[count];
+                amplitudes[3]=amplitude4[count];
+                //mexPrintf("value multi %f %f %f\n",amplitudes[0],amplitudes[1]);
+                setCS(amplitudes, 3);    /* this statement is equivalent to sum=sum+count */
+                Sleep(1); //force delay
+            }
+        }
     } else {
         mexErrMsgIdAndTxt("chrislib:DAC4interfac:ft245rInit","ft245rInit init failed.");
     }

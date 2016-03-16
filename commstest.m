@@ -1,10 +1,10 @@
 function commstest
     % comms test to wiggle mirror.
-    freq=500;
-    i=0.25;
+    freq=200;
+    i=0.1;
     while 1
-        i=i*-1;
-        DAC4_d2xxInterface([0 0 0])
+        i=-0.2*rand(1);
+        DAC4_d2xxInterface([i i 0 0])
         delay(1/freq)
     end
 end
